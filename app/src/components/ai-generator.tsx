@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState, useTransition } from "react";
 import { generateAction, saveGeneratedAction, type GenerateState } from "@/app/actions";
 import { SOURCE_KINDS, TOPICS } from "@/lib/topics";
@@ -7,7 +8,11 @@ import { SOURCE_KINDS, TOPICS } from "@/lib/topics";
 type Result = Extract<GenerateState, { status: "ok" }>["result"];
 type Draft = Result["ideas"][number] & { keep: boolean };
 
-export function AiGenerator({ configured }: { configured: boolean }) {
+export type ProviderOption = { id: string; label: string; model: string; isDefault: boolean };
+
+export function AiGenerator({ providers }: { providers: ProviderOption[] }) {
+  const configured = providers.length > 0;
+  const defaultId = providers.find((p) => p.isDefault)?.id ?? providers[0]?.id;
   const [state, formAction, pending] = useActionState(generateAction, { status: "idle" });
   // Remount the review step whenever a new result arrives so drafts reset.
   const key = state.status === "ok" ? JSON.stringify(state.result).length + state.result.source.title : "none";
@@ -16,7 +21,8 @@ export function AiGenerator({ configured }: { configured: boolean }) {
     <div className="space-y-6">
       {!configured && (
         <p className="rounded-2xl bg-accent-soft p-3 text-sm text-accent">
-          AI is off: add <code>ANTHROPIC_API_KEY</code> to <code>app/.env.local</code> and restart the server.
+          AI is off: add a Claude, Gemini or OpenAI key in{" "}
+          <Link href="/settings" className="font-semibold underline">Settings</Link>.
         </p>
       )}
       <form action={formAction} className="space-y-4">
@@ -34,6 +40,19 @@ export function AiGenerator({ configured }: { configured: boolean }) {
           <input name="author" className="input" placeholder="Author (optional)" />
           <input name="count" type="number" min={1} max={15} defaultValue={6} className="input" aria-label="Number of cards" />
         </div>
+        {configured && (
+          <div>
+            <label className="label" htmlFor="provider">AI provider</label>
+            <div className="flex items-center gap-2">
+              <select id="provider" name="provider" defaultValue={defaultId} className="input">
+                {providers.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label} · {p.model}</option>
+                ))}
+              </select>
+              <Link href="/settings" className="shrink-0 text-sm text-muted hover:text-ink">Manage keys</Link>
+            </div>
+          </div>
+        )}
         <button className="btn-primary w-full py-3" disabled={pending || !configured}>
           {pending ? "Reading and writing cards… (can take a minute)" : "✨ Generate idea cards"}
         </button>

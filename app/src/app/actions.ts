@@ -7,7 +7,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import * as q from "@/lib/queries";
-import { AiError, GeneratedCardsSchema, aiConfigured, generateCards } from "@/lib/ai";
+import {
+  AiError,
+  GeneratedCardsSchema,
+  clearProviderKey,
+  generateCards,
+  getDefaultProvider,
+  isProviderId,
+  saveProviderConfig,
+  setDefaultProvider,
+  testProvider,
+} from "@/lib/ai";
 import { FetchSourceError, fetchSource } from "@/lib/fetch-source";
 import { SOURCE_KINDS, TOPIC_SLUGS } from "@/lib/topics";
 
@@ -110,8 +120,9 @@ export type GenerateState =
   | { status: "ok"; result: z.infer<typeof GeneratedCardsSchema>; url: string | null };
 
 export async function generateAction(_: GenerateState, formData: FormData): Promise<GenerateState> {
-  if (!aiConfigured())
-    return { status: "error", error: "Set ANTHROPIC_API_KEY in app/.env.local and restart the server to use AI generation." };
+  const requested = str(formData, "provider");
+  const provider = isProviderId(requested) ? requested : getDefaultProvider();
+  if (!provider) return { status: "error", error: "Add an API key in Settings to use AI generation." };
 
   const url = str(formData, "url");
   let text = str(formData, "text");
@@ -121,7 +132,7 @@ export async function generateAction(_: GenerateState, formData: FormData): Prom
   try {
     if (!text && url) ({ text, title: pageTitle } = await fetchSource(url));
     if (!text) return { status: "error", error: "Paste a link or some text first." };
-    const result = await generateCards({
+    const result = await generateCards(provider, {
       text,
       count,
       hint: { title: str(formData, "title") || pageTitle, author: str(formData, "author"), url },
@@ -154,4 +165,27 @@ export async function saveGeneratedAction(payload: unknown, url: string | null) 
 export async function gradeAction(ideaId: number, grade: q.Grade) {
   q.gradeReview(ideaId, grade);
   refresh();
+}
+
+// ---------- AI provider settings ----------
+
+export type ProviderFormState = { ok?: string; error?: string } | undefined;
+
+export async function saveProviderAction(_: ProviderFormState, formData: FormData): Promise<ProviderFormState> {
+  const id = str(formData, "provider");
+  if (!isProviderId(id)) return { error: "Unknown provider." };
+  const intent = str(formData, "intent");
+  if (intent === "remove") {
+    clearProviderKey(id);
+    refresh();
+    return { ok: "Saved key removed." };
+  }
+  saveProviderConfig(id, { apiKey: str(formData, "apiKey"), model: str(formData, "model") });
+  if (intent === "default") setDefaultProvider(id);
+  refresh();
+  if (intent === "test") {
+    const r = await testProvider(id);
+    return r.ok ? { ok: `Works: key accepted and model "${r.model}" found.` } : { error: r.error };
+  }
+  return { ok: intent === "default" ? "Saved and set as default." : "Saved." };
 }

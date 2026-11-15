@@ -32,9 +32,14 @@ export default async function FeedPage({ searchParams }: PageProps<"/">) {
             )}
           </p>
         </div>
-        <Link href="/topics" className="text-sm text-muted hover:text-ink">
-          Edit topics
-        </Link>
+        <div className="flex gap-3 text-sm text-muted">
+          <Link href="/topics" className="hover:text-ink">
+            Topics
+          </Link>
+          <Link href="/settings" className="hover:text-ink" aria-label="Settings">
+            ⚙ Settings
+          </Link>
+        </div>
       </div>
 
       <div className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">

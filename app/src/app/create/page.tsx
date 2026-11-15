@@ -2,10 +2,13 @@ import Link from "next/link";
 import { createIdeaAction } from "@/app/actions";
 import { AiGenerator } from "@/components/ai-generator";
 import { IdeaForm } from "@/components/idea-form";
-import { aiConfigured } from "@/lib/ai";
+import { getProviderStatuses } from "@/lib/ai";
 
 export default async function CreatePage({ searchParams }: PageProps<"/create">) {
   const mode = (await searchParams).mode === "write" ? "write" : "ai";
+  const providers = getProviderStatuses()
+    .filter((p) => p.configured)
+    .map(({ id, label, model, isDefault }) => ({ id, label, model, isDefault }));
   return (
     <div>
       <h1 className="font-serif text-3xl font-bold tracking-tight">Create</h1>
@@ -17,7 +20,7 @@ export default async function CreatePage({ searchParams }: PageProps<"/create">)
           ✍️ Write your own
         </Link>
       </div>
-      {mode === "ai" ? <AiGenerator configured={aiConfigured()} /> : <IdeaForm action={createIdeaAction} showSource />}
+      {mode === "ai" ? <AiGenerator providers={providers} /> : <IdeaForm action={createIdeaAction} showSource />}
     </div>
   );
 }

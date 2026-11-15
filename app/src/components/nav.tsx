@@ -34,6 +34,13 @@ export function Nav({ due }: { due: number }) {
                 {i.href === "/review" && due > 0 && <Badge n={due} />}
               </Link>
             ))}
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              className={`rounded-full px-3 py-1.5 text-sm ${active("/settings") ? "bg-surface-2 font-semibold" : "text-muted hover:text-ink"}`}
+            >
+              ⚙
+            </Link>
           </nav>
         </div>
       </header>

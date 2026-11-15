@@ -10,7 +10,7 @@ Requires **Node.js 22.13+** (uses the built-in `node:sqlite`).
 ```bash
 cd app
 npm install
-cp .env.example .env.local   # then add your ANTHROPIC_API_KEY for AI cards
+cp .env.example .env.local   # optional: AI keys (or add them later in Settings)
 npm run dev                  # http://localhost:3000
 ```
 
@@ -30,12 +30,24 @@ For everyday use, run the faster production build: `npm run build && npm start`.
 - **Review**: saved ideas come back on a spaced-repetition schedule (recall, reveal, grade).
 - **Search** across ideas, sources and authors.
 
-## AI cards
+## AI cards: Claude, Gemini or OpenAI
 
-`src/lib/ai.ts` calls the Claude API (`claude-opus-5-5`, medium effort) with a structured-output
-schema, so every response is validated JSON (source + list of ideas with topics). Requests opt into
-server-side refusal fallbacks. Each generation costs a few cents, depending on source length; very
-long sources (>600k characters) are rejected rather than silently truncated.
+Add a key for any of these on the **Settings** page (⚙), or in `.env.local`:
+
+| Provider | Env variable | Default model |
+|---|---|---|
+| Claude (Anthropic) | `ANTHROPIC_API_KEY` | `claude-opus-5-5` |
+| Gemini (Google) | `GEMINI_API_KEY` | `gemini-3.8-flash` |
+| OpenAI | `OPENAI_API_KEY` | `gpt-5.5` |
+
+- You choose the provider each time you generate; the default is set in Settings.
+- The model name is editable per provider. **Save & test** checks the key and model with a
+  model lookup, which uses no tokens.
+- Keys saved in Settings are stored in plain text in the local database file, never sent to the
+  browser (only the last 4 characters are shown), and take priority over `.env.local`.
+- Every provider gets the same prompt and the same JSON schema, so cards come back in one format
+  and are validated before you see them. Generation costs a few cents per source.
+- Very long sources (>600k characters) are rejected rather than silently truncated.
 
 ## Code map
 
@@ -44,8 +56,8 @@ long sources (>600k characters) are rejected rather than silently truncated.
 | `src/lib/db.ts` | SQLite connection, schema, first-run seed |
 | `src/lib/seed.ts` | Starter library |
 | `src/lib/queries.ts` | All data access + spaced-repetition scheduling |
-| `src/lib/ai.ts` | Claude card generation |
+| `src/lib/ai/` | Card generation: shared prompt + schema, one file per provider, key/model settings |
 | `src/lib/fetch-source.ts` | Download a URL and extract readable text |
 | `src/app/actions.ts` | Server actions (all mutations) |
-| `src/app/**/page.tsx` | Pages: feed, topics, idea, source, stashes, create, review, search, mine |
+| `src/app/**/page.tsx` | Pages: feed, topics, idea, source, stashes, create, review, search, mine, settings |
 | `src/components/` | Idea card, stash picker, AI generator, review session, nav |

@@ -12,7 +12,7 @@ reviewed so they stick. Built for personal use.
 | Storage | Local SQLite file via Node's built-in `node:sqlite` | Single user: no server DB, no accounts, easy backup (one file) |
 | Auth | None | Personal use. **Don't expose it publicly without adding auth.** |
 | Content | Starter library + your own cards + AI-generated cards | AI turns any link or pasted text into cards, so the library grows with what you read |
-| AI | Claude via the Anthropic SDK, structured JSON output | Cards come back typed and validated; you review/edit before saving |
+| AI | Claude, Gemini or OpenAI (official SDKs), same prompt + JSON schema for all | Use whichever key you have; cards come back typed and validated; you review/edit before saving |
 
 ## Concepts → data model
 
@@ -30,6 +30,8 @@ reviewed so they stick. Built for personal use.
       save to stash (multi-stash picker, create stash inline), stash pages (rename/delete), source pages.
 - [x] **3. Creation** — write your own ideas (create/edit/delete); AI cards from a URL or pasted text
       with a review-and-edit step before saving.
+- [x] **3a. Multiple AI providers**: Settings page for Claude / Gemini / OpenAI keys and models,
+      key test without spending tokens, default provider, provider picker on Create.
 - [x] **3b. Retention** — daily review with recall-then-reveal and Forgot/Hard/Got it/Easy grading; search.
 - [ ] **4. Next up (ideas)**
   - Export/import (JSON / Markdown) and a backup button
